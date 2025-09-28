@@ -1,0 +1,88 @@
+services:
+  eureka-server:
+    build: ../eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+
+  api-gateway-concessionaria:
+    build: ../api-gateway-concessionaria
+    container_name: api-gateway-concessionaria
+    ports:
+      - "8080:8080"
+    depends_on:
+      - eureka-server
+
+  funcionario-service:
+    build: ../api-funcionarios
+    depends_on:
+      - eureka-server
+      - funcionario-db
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://funcionario-db:5432/funcionarios_db
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=admin
+    deploy:
+      replicas: 2
+
+  cliente-service:
+    build: ../api-clientes
+    depends_on:
+      - eureka-server
+      - cliente-db
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://cliente-db:5432/clientes_db
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=admin
+    deploy:
+      replicas: 2
+
+  veiculo-service:
+    build: ../api-veiculos
+    depends_on:
+      - eureka-server
+      - veiculo-db
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://veiculo-db:5432/veiculos_db
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=admin
+    deploy:
+      replicas: 2
+
+  cliente-db:
+    image: postgres:14
+    container_name: cliente-db
+    environment:
+      - POSTGRES_DB=clientes_db
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    volumes:
+      - cliente-data:/var/lib/postgresql/data
+
+  funcionario-db:
+    image: postgres:14
+    container_name: funcionario-db
+    environment:
+      - POSTGRES_DB=funcionarios_db
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    volumes:
+      - funcionario-data:/var/lib/postgresql/data
+
+  veiculo-db:
+    image: postgres:14
+    container_name: veiculo-db
+    environment:
+      - POSTGRES_DB=veiculos_db
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    volumes:
+      - veiculo-data:/var/lib/postgresql/data
+
+volumes:
+  cliente-data:
+  funcionario-data:
+  veiculo-data:
