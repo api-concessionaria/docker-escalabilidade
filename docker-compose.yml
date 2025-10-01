@@ -52,6 +52,19 @@ services:
     deploy:
       replicas: 2
 
+  venda-service:
+    build: ../api-vendas
+    depends_on:
+      - eureka-server
+      - venda-db
+    environment:
+    - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    - SPRING_DATASOURCE_URL=jdbc:postgresql://venda-db:5432/vendas_db
+    - SPRING_DATASOURCE_USERNAME=admin
+    - SPRING_DATASOURCE_PASSWORD=admin
+    deploy:
+      replicas: 2
+
   cliente-db:
     image: postgres:14
     container_name: cliente-db
@@ -82,7 +95,18 @@ services:
     volumes:
       - veiculo-data:/var/lib/postgresql/data
 
+  venda-db:
+    image: postgres:14
+    container_name: venda-db
+    environment:
+      - POSTGRES_DB=vendas_db
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    volumes:
+      - venda-data:/var/lib/postgresql/data
+
 volumes:
   cliente-data:
   funcionario-data:
   veiculo-data:
+  venda-data:
