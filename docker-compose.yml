@@ -4,6 +4,11 @@ services:
     container_name: eureka-server
     ports:
       - "8761:8761"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   api-gateway-concessionaria:
     build: ../api-gateway-concessionaria
@@ -11,59 +16,83 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - eureka-server
+      eureka-server:
+          condition: service_healthy
 
   funcionario-service:
     build: ../api-funcionarios
+    ports:
+      - "8081:8081"
     depends_on:
-      - eureka-server
-      - funcionario-db
+      eureka-server:
+        condition: service_healthy
+      funcionario-db:
+        condition: service_started
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:postgresql://funcionario-db:5432/funcionarios_db
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=admin
-    deploy:
-      replicas: 2
 
   cliente-service:
     build: ../api-clientes
+    ports:
+      - "8082:8082"
     depends_on:
-      - eureka-server
-      - cliente-db
+      eureka-server:
+        condition: service_healthy
+      cliente-db:
+        condition: service_started
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:postgresql://cliente-db:5432/clientes_db
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=admin
-    deploy:
-      replicas: 2
 
   veiculo-service:
     build: ../api-veiculos
+    ports:
+      - "8083:8083"
     depends_on:
-      - eureka-server
-      - veiculo-db
+      eureka-server:
+        condition: service_healthy
+      veiculo-db:
+        condition: service_started
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:postgresql://veiculo-db:5432/veiculos_db
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=admin
-    deploy:
-      replicas: 2
 
   venda-service:
     build: ../api-vendas
+    ports:
+      - "8084:8084"
     depends_on:
-      - eureka-server
-      - venda-db
+      eureka-server:
+        condition: service_healthy
+      venda-db:
+        condition: service_started
     environment:
     - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     - SPRING_DATASOURCE_URL=jdbc:postgresql://venda-db:5432/vendas_db
     - SPRING_DATASOURCE_USERNAME=admin
     - SPRING_DATASOURCE_PASSWORD=admin
-    deploy:
-      replicas: 2
+
+  auth-service:
+    build: ../api-auth
+    ports:
+      - "8085:8085"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      auth-db:
+        condition: service_started
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://auth-db:5432/auths_db
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=admin
 
   cliente-db:
     image: postgres:14
@@ -105,8 +134,19 @@ services:
     volumes:
       - venda-data:/var/lib/postgresql/data
 
+  auth-db:
+    image: postgres:14
+    container_name: auth-db
+    environment:
+      - POSTGRES_DB=auths_db
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    volumes:
+      - auth-data:/var/lib/postgresql/data
+
 volumes:
   cliente-data:
   funcionario-data:
   veiculo-data:
   venda-data:
+  auth-data:
