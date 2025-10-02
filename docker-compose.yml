@@ -5,10 +5,11 @@ services:
     ports:
       - "8761:8761"
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
-      interval: 30s
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
       timeout: 10s
       retries: 5
+      start_period: 10s
 
   api-gateway-concessionaria:
     build: ../api-gateway-concessionaria
@@ -17,7 +18,7 @@ services:
       - "8080:8080"
     depends_on:
       eureka-server:
-          condition: service_healthy
+        condition: service_healthy
 
   funcionario-service:
     build: ../api-funcionarios
@@ -33,6 +34,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://funcionario-db:5432/funcionarios_db
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=admin
+    deploy:
+      replicas: 1
 
   cliente-service:
     build: ../api-clientes
@@ -48,6 +51,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://cliente-db:5432/clientes_db
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=admin
+    deploy:
+      replicas: 1
 
   veiculo-service:
     build: ../api-veiculos
@@ -63,6 +68,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://veiculo-db:5432/veiculos_db
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=admin
+    deploy:
+      replicas: 1
 
   venda-service:
     build: ../api-vendas
@@ -74,10 +81,12 @@ services:
       venda-db:
         condition: service_started
     environment:
-    - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-    - SPRING_DATASOURCE_URL=jdbc:postgresql://venda-db:5432/vendas_db
-    - SPRING_DATASOURCE_USERNAME=admin
-    - SPRING_DATASOURCE_PASSWORD=admin
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://venda-db:5432/vendas_db
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=admin
+    deploy:
+      replicas: 1
 
   auth-service:
     build: ../api-auth
